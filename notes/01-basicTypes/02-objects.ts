@@ -1,5 +1,7 @@
 //Object types
 
+import { timeStamp } from "console"
+
 export let dog : {
     woof: Function,
     name: string,
@@ -86,4 +88,19 @@ ledgerEntry.note = "Actually, I just raided the piggy bank and bought candy"
 // Pretend you are building two characters for an RPG video game. Start by declaring a variable for each character with the let keyword. Use an explicit object type annotation to describe the fields for each character. Then after you have described the types, initialize the variables with values that make the compiler happy.
 
 
+let theKraken : {
+    name: string,
+    hp: number,
+    attackDice: [number, number],
+    attack: Function
+}
 
+
+theKraken = {
+    name: "The Kraken",
+    hp: 359,
+    attackDice: [5, 10],
+    attack: () => {
+        console.log("Roar")
+    }
+}

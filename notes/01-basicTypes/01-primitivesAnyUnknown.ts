@@ -41,6 +41,8 @@ const o : object = {}
 const nl : null = null;
 //Remember when using the runtime typeof operator null is typed as "object", but using the TypeScript compiler it is typed as null.
 
+
+
 //Type inference
 
 // In most of the above cases if we had not told typescript the type of the variable it nevertheless would infer the correct type from the type of the value we used to initialize the variable.
@@ -67,8 +69,6 @@ let m = 5; //Typescript correctly assigns the number type to m
 
 
 
-
-
 // Part 2
 //Did you notice any types that weren't quite what you expected. If so, go ahead and add the type annotations above so they match the explicitly typed primitive variables given in the notes. Only add annotations to those that need them.
 
@@ -78,15 +78,14 @@ let m = 5; //Typescript correctly assigns the number type to m
 //**************
 
 //Answers
-//let m = 5;
-//let str2 = "dog"
-//let sym2 = Symbol("I'm special too")
-//let obj2: object = {}
-//let bool = false
-//let fun : Function  = () => {}
-//let nll2 : null = null
-//const nll3 = null //No annotation need when null is declared with const
 
+let str2 = "dog"
+let sym2 = Symbol("I'm special too")
+let obj2 : object = {}
+let bool = false
+let fun : Function  = () => {}
+let nll2 : null = null
+const nll3 : any = null
 
 
 // any and unknown
@@ -142,7 +141,7 @@ Math.abs(uninitialized4)
 //Say I get an API result I don't know if it will be a number or a string.
 
 // I can assign it
-const unknownValue : unknown = "this time it's a string"
+let unknownValue : unknown //= "this time it's a string"
 
 //Now before I can use the value, I must check if it's a string
 if (typeof unknownValue === "string") {

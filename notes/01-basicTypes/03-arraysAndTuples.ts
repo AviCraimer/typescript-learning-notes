@@ -33,7 +33,29 @@ const movement1 : [string, number] = ["North", 3]
 
 //1. Initialize a variable with a type that is a tuple of a list of numbers together with a list of functions
 
+const lists : [number[], Function[]  ] = [
+    [1,2,3],
+    [ y => 2*y, n => n*n ]
+]
+
 //2. Initialize a variable with a type that is a list of tuples, where each tuple has a dog (object type) and an owner (object type).
+
+
+
+
+type DogOwnerPairs = [
+    {type: "dog", name: string},
+    {type: "owner", name: string}
+]
+
+let dogsOwners : DogOwnerPairs[]
+
+
+dogsOwners = [
+    [{type: "dog", name: "fido"},
+    {type: "owner", name: "Avi"}]
+]
+
 
 
 
