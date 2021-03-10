@@ -1,5 +1,5 @@
 // You can form a type based on a literal string or number value
-// For example, notice the type inffere here
+// For example, notice the type inference here
 
 const dog1 = "fido"
 
@@ -52,7 +52,7 @@ let direction : "N" | "S" | "E" | "W"
 direction = "N"
 direction = "W"
 
-direction = "New" // Type error
+direction = "North by northwest" // Type error
 
 // typescript also knows that all the values in directions type are strings. So we can assign direction to a string value.
 
@@ -114,6 +114,6 @@ robbie = {
 
 let x : number & string
 
-// This means that x can never be assigned a value, there is no value that is both a string and a number.
+// This means that x can never be assigned a value; there is no value that is both a string and a number.
 
 
