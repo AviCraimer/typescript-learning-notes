@@ -139,7 +139,9 @@ Math.abs(uninitialized4)
 //Say I get an API result I don't know if it will be a number or a string.
 
 // I can assign it
-let unknownValue : unknown //= "this time it's a string"
+let unknownValue : unknown = "this time it's a string"
+
+unknownValue.split("") //Error because the type is still unknown
 
 //Now before I can use the value, I must check if it's a string
 if (typeof unknownValue === "string") {
