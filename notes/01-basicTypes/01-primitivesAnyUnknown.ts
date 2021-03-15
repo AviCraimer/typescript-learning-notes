@@ -102,10 +102,10 @@ let uninitialized2 = 5
 // Now typescript can infer that the value is number. It does not let us call the string method split on the value.
 uninitialized2.split("")
 
-//This is how an implicit any works. However, if we assign any explicitly in a type annotation then the typescript compiler will not help with type checking this variable.
+// However, if we assign any explicitly in a type annotation then the typescript compiler will not help with type checking this variable.
 
 let uninitialized3 : any; //explicit any
-uninitialized3 = 5
+uninitialized3 = 5 //Initialize the number with a value, but he variable's type is still any
 uninitialized3.split("") // Yikes this will be a runtime error since a number value does not have the split method!
 
 //The compiler does not flag the error because we explicitly told it that the variable could be anything.
