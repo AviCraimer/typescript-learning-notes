@@ -94,12 +94,10 @@ const nll3 : any = null
 
 let uninitialized = null;
 
-//That's because typescript assumes that null is an empty value similar to undefined, that this variable is waiting to be initialied with a value. Similar to just declaring a variable without a value.
-
-let uninitialized2
+//That's because typescript assumes that null is an empty value similar to undefined, that this variable is waiting to be initialized with a value. Similar to just declaring a variable without a value.
 
 //Here we initialize the variable with a number value.
-uninitialized2 = 5
+let uninitialized2 = 5
 
 // Now typescript can infer that the value is number. It does not let us call the string method split on the value.
 uninitialized2.split("")

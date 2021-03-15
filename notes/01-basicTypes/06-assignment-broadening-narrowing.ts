@@ -9,6 +9,8 @@ type Employee = {
     name: string,
     employer: Person
 }
+
+
 //Notice that Employee has everything Person has and more. This makes Employee an implicit subtype or narrowed version of Person.
 
 let sam :Person = {

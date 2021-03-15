@@ -1,5 +1,7 @@
 // Until now we have been specifying the types of functions only in the most general way with the Function type.
 
+import { stringify } from "querystring"
+
 let f : Function
 
 // However, for most purposes, we want to be more specific.
@@ -40,7 +42,7 @@ strConcatTyped(String(20), String(21)) // OK, because we converted the numbers t
 let mathFunc1 : (a: number, b: number) => number
 //This is called the short-hand notation.
 
-//Notice that the return type is given after the "=>" which mirrors the JavaScript arrow funciton syntax
+//Notice that the return type is given after the "=>" which mirrors the JavaScript arrow function syntax
 // Note: the parameter names in the type definition are purely for documentation, they don't have to match the parameter names of the function implementation.
 
 //e.g., This implementation doesn't give a type error even though I use different parameter names
@@ -97,7 +99,17 @@ const squareShortAndTyped2 : NumFunc  = n => n*n // So pretty!
 
 //1. Write a well-typed function that takes a string and returns a number equal to the length of the string times the number of words in the string.
 
+function wordsTimesLength (str: string):number {
+    return str.length * str.split(" ").length;
+}
+
 //2. Write a function that takes an array of dogs and returns an array of the dog's primary owners.
+
+type Dog = {
+    owner: {name: string}
+}
+
+const getOwner : (d:Dog) => {name: string} = d => d.owner
 
 //3. Write a function that takes an RPG character and returns an attack damage value (number) based on the RPG character's stats and some randomness.
 

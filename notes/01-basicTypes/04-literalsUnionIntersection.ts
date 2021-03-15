@@ -1,3 +1,5 @@
+//**** Literal Types
+
 // You can form a type based on a literal string or number value
 // For example, notice the type inference here
 
@@ -86,7 +88,9 @@ let objectKey : number | string | symbol
 
 // Intersections allow us to reuse our types and compose them together to form more specific types.
 
-// e.g., A robot dog is type that has all the features required to be a dog AND all the features required to be a robot. Note that they can have overlapping features, like "name".
+// e.g., A robot dog is type that has all the features required to be a dog AND all the features required to be a robot.
+
+//Note they can also have shared/overlapping features, like "name".
 
 // (We can create named type aliases for reuse with the type keyword)
 
