@@ -1,5 +1,3 @@
-import { getDiffieHellman } from "crypto"
-
 class Superhero {
 
     //We declare instance properties like this
@@ -14,7 +12,7 @@ class Superhero {
 
     //Finally, we have protected
     protected superPower: string
-    //Protected means the property is available to this class and classes that inherit from this class (i.e., child classes)
+    //Protected means the property is available to this class and classes that inherit from this class (i.e., descendants classes)
 
 
     // All instance properties that are not initialized above must be initialized in the constructor
@@ -101,6 +99,7 @@ let theFlash =  new Speedster("The Flash", "Barry Allen")
 theFlash.run()
 
 
+
 //Class short hand, avoiding duplication
 class LongWindedThug {
     hp : number
@@ -124,15 +123,18 @@ class ShortThug {
     defeated: boolean = false // We can mix and match. We don't need this in the constructor so we declare it above.
 
     constructor(
-        public hp: number,
-        public damage: number
+        public hp: number = hp,
+        public damage: number = damage
         //Note, here the public keyword is not optional, since this let's TypeScript know that we are declaring the property in the constructor.
     ) {
-        this.hp = hp
-        this.damage = damage
+        //Instead of this, you can use the default assignment of parameters as above
+        //this.hp = hp
+        //this.damage = damage
     }
     attack () {
         console.log(`Thug attacks for ${this.damage} points of damage`)
     }
 }
 
+const thug = new ShortThug(24, 4)
+const y = thug.hp

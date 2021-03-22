@@ -36,7 +36,7 @@ dog = dogAsInterface
 //With type aliases we compose types using intersections and unions. The intersection type gives us something analogous to inheritance in OOP, except the order does not matter.  Instead of thinking in terms of a base type and it's child sub-types, we can just think of narrowing a bunch of broad types by composing them together.
 type BirdTypeAlias =
 //Note that for consistent formatting you can add an extra & at the beginning. This doesn't affect the type.
-    & AnimalInterface
+    & AnimalTypeAlias
     &  {
         flightSpeed: number // Km/h
     }
@@ -50,13 +50,10 @@ type BirdTypeAlias_DifferentOrder =
     & {
         flightSpeed: number // Km/h
     }
-    & AnimalInterface
+    & AnimalTypeAlias
     & {
         fly: Function
     }
-
-
-
 
 let swallow : BirdTypeAlias = {
     species: "swallow",
@@ -73,7 +70,7 @@ swallow = swallow2
 //Yes: Order doesn't matter with intersection types -- except in the case of function overloads...because there always has be be an exception : (
 
 
-//  /*
+ // /*
 interface BirdInterface extends AnimalInterface { // Must be in this order
     flightSpeed: number,
     fly: Function
@@ -81,8 +78,8 @@ interface BirdInterface extends AnimalInterface { // Must be in this order
 // */
 
 //Comment the above out and comment this in to see that we can't chance the order
-  /*
-interface AnimalInterface extends   {
+ /*
+interface AnimalInterface extends {
     flightSpeed: number,
     fly: Function
 }
@@ -150,6 +147,6 @@ const hawk : BirdInterface = {
 
 //However, if you want the added predictability and type safety that comes with immutability, type aliases are a better bet.
 
-// To some extent, it is a matter of comfort and familiarity. Developers from an Object-Oriented background may find the terminology of "interface" and "extends" more intuitive than the that of "type alias" and "intersection".
+// To some extent, it is a matter of comfort and familiarity. Developers from an Object-Oriented background may find the terminology of "interface" and "extends" more familiar than the that of "type alias" and "intersection".
 
 //However, we should not let syntactic familiarity lock us into using interfaces, if the code would be better served by having flexible type composition and immutability.
