@@ -83,7 +83,7 @@ FooClass = Baz
 
 //Inheritance
 class Speedster extends Superhero {
-    protected superPower : "speed" = "speed"
+    protected superPower : "speed" = "speed" // This narrows the superPower property to the literal type "speed" instead of string.
 
     constructor(name:string, secretIdentity: string ) { //Notice, the constructor has only two arguments instead of three because superPower doesn't need to be specified
         super(name, secretIdentity, "speed")
