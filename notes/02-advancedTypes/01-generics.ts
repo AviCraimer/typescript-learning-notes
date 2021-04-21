@@ -116,10 +116,12 @@ const numberData = treeGeneric.children[0].data;
 //Somewhat more advanced
 // We can define a custom tree mapping function for analogous to Array.prototype.map()
 
-const mapTree = <T, S>(
-    fn: (data: T) => S // Takes a callback function argument that is applied to the node data.
-): ((startTree: TreeRootGeneric<T>) => TreeRootGeneric<S>) => {
+const mapTree = <T, S>( //Here we have two type parameters. The first represents the starting type of the tree, the second represents that type of the tree after mapping
+    fn: (data: T) => S // Takes a callback function argument that will be applied to the tree node data.
+): ((startTree: TreeRootGeneric<T>) => TreeRootGeneric<S>) => { // Returns a function that goes from a T-tree to an S-tree
 
+    //Use function overload to say that a tree root returns a tree root.
+    //Recall that a tree root is a subtype (special case) of a tree node, which is what allows the overload to work.
     function mapTreeSteps (currentTree: TreeRootGeneric<T>, parent: null) : TreeRootGeneric<S>
     function mapTreeSteps (currentTree: TreeNodeGeneric<T>, parent: TreeNodeGeneric<S>) : TreeNodeGeneric<S>
     function mapTreeSteps (
@@ -130,7 +132,7 @@ const mapTree = <T, S>(
         //Create a new node with mapped data
         const newNode : TreeNodeGeneric<S> =  {
             parent,
-            data: fn(currentTree.data), //Apply the provided call back function to the data
+            data: fn(currentTree.data), //Apply the provided callback function to the data from the original node
             children: []
         };
 
