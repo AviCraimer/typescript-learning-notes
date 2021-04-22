@@ -112,6 +112,31 @@ treeGeneric.children = [
 //Now when we retrieve our data, TypeScript correctly infers that we have a value of type number
 const numberData = treeGeneric.children[0].data;
 
+//EXERCISE
+
+class _Queue {
+    data: any[] = []
+
+    constructor (data: any) {
+        this.data = data;
+    }
+
+    push (item: any): Queue {
+        this.data.push(item);
+        return this;
+    }
+    pop (item: any): any {
+        return this.data.shift();
+    }
+}
+
+//Copy this class below removing the _ from the name. Convert it to use generics
+
+//Hint first line is
+//class Queue<T> {
+
+
+
 
 //Somewhat more advanced
 // We can define a custom tree mapping function for analogous to Array.prototype.map()
