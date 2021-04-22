@@ -9,16 +9,16 @@
 //A data property to store any arbitrary data
 
 //It has an array of children which contains a combination of further tree nodes
-type TreeNode = {
-    parent: TreeNode | null;
-    children: TreeNode[];
+type _TreeNode = {
+    parent: _TreeNode | null;
+    children: _TreeNode[];
     data: any;
 };
 
 //A tree root is a TreeNode with parent === null
-type TreeRoot = TreeNode & { parent: null };
+type _TreeRoot = _TreeNode & { parent: null };
 
-const tree: TreeRoot = {
+const tree: _TreeRoot = {
     parent: null,
     data: 1,
     children: [],
@@ -72,19 +72,19 @@ type TreeNodeNumber = {
 //Generic types allow generality in the type definition together with specificity in the type of the instantiated value.
 
 //The T is a type parameter. i.e., it is a placeholder that can be filled in with any TypeScript type.
-type TreeNodeGeneric<T> = {
+type TreeNode<T> = {
     //We put type parameters between angle brackets, think of these as analogous to the smooth brackets of a regular function, i.e, <T> <=> (x)
-    parent: TreeNodeGeneric<T> | null;
-    children: TreeNodeGeneric<T>[];
+    parent: TreeNode<T> | null;
+    children: TreeNode<T>[];
     data: T; // Notice that we put the type parameter here, where we previously had the any type.
 };
 
-type TreeRootGeneric<T> = TreeNodeGeneric<T> & { parent: null }; // For our tree root we can pass through the type parameter to our generic node
+type TreeRoot<T> = TreeNode<T> & { parent: null }; // For our tree root we can pass through the type parameter to our generic node
 
 //Now we copy our tree code from above but we assign the generic types
 //Notice that we pass in number as the type argument to fill in our T parameter
 //This means that everywhere we had T in our type definition, this type will now have number
-const treeGeneric: TreeRootGeneric<number> = {
+const treeGeneric: TreeRoot<number> = {
     parent: null,
     data: 1,
     children: [],
@@ -118,19 +118,19 @@ const numberData = treeGeneric.children[0].data;
 
 const mapTree = <T, S>( //Here we have two type parameters. The first represents the starting type of the tree, the second represents that type of the tree after mapping
     fn: (data: T) => S // Takes a callback function argument that will be applied to the tree node data.
-): ((startTree: TreeRootGeneric<T>) => TreeRootGeneric<S>) => { // Returns a function that goes from a T-tree to an S-tree
+): ((startTree: TreeRoot<T>) => TreeRoot<S>) => { // Returns a function that goes from a T-tree to an S-tree
 
     //Use function overload to say that a tree root returns a tree root.
     //Recall that a tree root is a subtype (special case) of a tree node, which is what allows the overload to work.
-    function mapTreeSteps (currentTree: TreeRootGeneric<T>, parent: null) : TreeRootGeneric<S>
-    function mapTreeSteps (currentTree: TreeNodeGeneric<T>, parent: TreeNodeGeneric<S>) : TreeNodeGeneric<S>
+    function mapTreeSteps (currentTree: TreeRoot<T>, parent: null) : TreeRoot<S>
+    function mapTreeSteps (currentTree: TreeNode<T>, parent: TreeNode<S>) : TreeNode<S>
     function mapTreeSteps (
-        currentTree: TreeNodeGeneric<T>,
-        parent: TreeNodeGeneric<S> | null
-    ): TreeNodeGeneric<S>  {
+        currentTree: TreeNode<T>,
+        parent: TreeNode<S> | null
+    ): TreeNode<S>  {
 
         //Create a new node with mapped data
-        const newNode : TreeNodeGeneric<S> =  {
+        const newNode : TreeNode<S> =  {
             parent,
             data: fn(currentTree.data), //Apply the provided callback function to the data from the original node
             children: []
@@ -143,7 +143,7 @@ const mapTree = <T, S>( //Here we have two type parameters. The first represents
     };
 
     //Return a function that applies the mapping for any given tree of type T
-    return (rootTree: TreeRootGeneric<T>):TreeRootGeneric<S> => mapTreeSteps(rootTree, null)
+    return (rootTree: TreeRoot<T>):TreeRoot<S> => mapTreeSteps(rootTree, null)
 };
 
 
