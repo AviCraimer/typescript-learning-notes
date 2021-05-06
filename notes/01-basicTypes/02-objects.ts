@@ -73,6 +73,9 @@ ledgerEntry = {
     note: "Got paid for shovelling the drive way and had to buy more melting salt."
 }
 
+
+
+
 ledgerEntry.income = 40
 
 //Compiler error tells you that you can't assign to income

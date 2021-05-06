@@ -17,6 +17,7 @@ stringArray = ["Josh", "Frank", "Paris"] ///etc
 stringArray = [1,2,4]
 stringArray = ["dog", "cat", {}]
 
+
 // You get the idea.
 
 // But what if I want a mix of values. Say I need a pair of a string and number. Say the direction to travel and the number of meters to move in that direction.

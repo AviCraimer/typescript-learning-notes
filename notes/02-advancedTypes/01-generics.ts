@@ -72,6 +72,9 @@ type TreeNodeNumber = {
 //Generic types allow generality in the type definition together with specificity in the type of the instantiated value.
 
 //The T is a type parameter. i.e., it is a placeholder that can be filled in with any TypeScript type.
+
+
+
 type TreeNode<T> = {
     //We put type parameters between angle brackets, think of these as analogous to the smooth brackets of a regular function, i.e, <T> <=> (x)
     parent: TreeNode<T> | null;

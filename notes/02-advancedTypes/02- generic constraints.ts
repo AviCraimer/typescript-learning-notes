@@ -17,7 +17,7 @@ const _addAge = <T>(obj: T) => {
 
 //We solve this problem with a generic constraint.
 
-const addAge = <T extends { dateOfBirth: Date }>(obj: T) => {
+const addAge = <T extends {dateOfBirth: Date}>(obj: T) => {
     const milliseconds = Date.now() - obj.dateOfBirth.getTime();
     const years = Math.floor(milliseconds / 1000 / 60 / 60 / 24 / 365.25);
 
@@ -26,6 +26,7 @@ const addAge = <T extends { dateOfBirth: Date }>(obj: T) => {
         age: years,
     };
 };
+
 
 const withAge = addAge({
     name: "Lex Luthor",
