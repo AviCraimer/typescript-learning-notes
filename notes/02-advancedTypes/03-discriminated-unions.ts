@@ -51,3 +51,14 @@ const makeAttack =  (character: Hero) => {
     return c;
 }
 
+
+const gandalf :Wizard = {
+    class: "wizard",
+    level: 18,
+    name: "gandolf",
+    hp: 178,
+    spellAttack: () => {}
+}
+
+//You can see that the type of madeAttack is Hero, which would allow you to chain together several functions that operate on the same discriminated union type.
+const madeAttack = makeAttack(gandalf)
