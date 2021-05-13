@@ -55,10 +55,55 @@ const makeAttack =  (character: Hero) => {
 const gandalf :Wizard = {
     class: "wizard",
     level: 18,
-    name: "gandolf",
+    name: "gandalf",
     hp: 178,
     spellAttack: () => {}
 }
 
 //You can see that the type of madeAttack is Hero, which would allow you to chain together several functions that operate on the same discriminated union type.
 const madeAttack = makeAttack(gandalf)
+
+
+
+//What if we don't want to use switch statements. We might prefer to have a dictionary to look up the function that needs to be called for each type. Here is an attempt that which ultimately fails do to the limits fo the TypeScript compiler.
+//If anybody finds a way to do this, please let me know and I'll update the notes.
+
+type  Classes = "wizard" | "fighter"
+
+const characterAttacks = {
+    "fighter":  (char: Fighter) => char.meleeAttack(),
+    "wizard": (char: Wizard) => char.spellAttack()
+}
+
+type CharacterAttacks = typeof characterAttacks;
+
+const getAttackFromObject =  function <T extends  Classes> (charClass: T) {
+    const makeAttack : CharacterAttacks[T] = characterAttacks[charClass]
+    return makeAttack
+}
+
+//This is correctly typed as (char: Wizard) => void
+const makeSpellAttack =  getAttackFromObject("wizard")
+
+//typed as (char: Fighter) => void
+const makeMeleeAttack =  getAttackFromObject("fighter")
+
+//Unfortunately, there doesn't seem to be a way to wrap this up in a single function that takes a hero argument
+const makeAttackFromObject = function <T extends Hero> (char: T) {
+
+    //Here it infers the union type "wizard" | "fighter", but this isn't want we want. We know that the type T will always have a .class property that is specifically one of those two, not either of them.
+    const charClass = char.class
+
+    //As a result here we get a union of function types ((char: Fighter) => void) | ((char: Wizard) => void)
+    const makeAttack = getAttackFromObject(charClass)
+
+    //We cannot call our makeAttack function because when calling a union of function types, the TypeScript compiler takes the intersection of all the function type parameters to see if there is any common paramter values that could be used to call all the function types. In this case there aren't since Wizard and Fighter are non-overlapping by design.
+
+    //So we get the error: Argument of type 'T' is not assignable to parameter of type 'never'.
+    makeAttack(char)
+
+    //This looks like a limit to the intelligence of the TypeScript compiler's type inference system.
+    // A further discussion of this can be found here:
+    // https://stackoverflow.com/questions/56406284/argument-of-type-is-not-assignable-to-parameter-of-type-never
+
+}
