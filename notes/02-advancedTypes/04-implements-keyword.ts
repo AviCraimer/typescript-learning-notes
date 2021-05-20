@@ -116,6 +116,16 @@ function ExpandableCardFactory (title: string, text: string, imageUrl: string, i
             }
 
     }
-
-
 }
+
+
+let card1 = new ExpandableCard("Title", "This is my card", "www.image.com", "An image")
+
+let card2 = ExpandableCardFactory("Title", "This is my card", "www.image.com", "An image")
+
+let card2Copy = card2
+
+//Card 1 and Card 2 can be assigned to each other because they have the same type shape in terms of properties and methods. TypeScript doesn't care that the first is a class instance while the second is not.
+card2 = card1
+card1 = card2Copy
+
