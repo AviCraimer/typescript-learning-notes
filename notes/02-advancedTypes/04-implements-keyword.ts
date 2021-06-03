@@ -1,18 +1,17 @@
 // TLDR - Nice cheat sheet here
 //https://rmolinamir.github.io/typescript-cheatsheet/#implements-keyword
 
-
 interface Card {
     title: string,
     text: string,
     render: () => HTMLElement
 }
 
+
 // Notice the error here since we have not implemented the required interface
 class _BasicCard implements Card {
 
 }
-
 
 class BasicCard implements Card {
     title: string
@@ -68,7 +67,7 @@ class ExpandableCard extends BasicCard implements Card, Clickable, WithImage {
         this.domNode = document.createElement('li')
     }
 
-    handleClick(e : Event) { //What happens if we don't declare the type, can TS infer it from the implements type? No.
+    handleClick(e: Event ) { //What happens if we don't declare the type, can TS infer it from the implements type? No.
         this.domNode.classList.add('expanded')
     }
 
@@ -113,8 +112,7 @@ function ExpandableCardFactory (title: string, text: string, imageUrl: string, i
             },
             handleClick (e) { //Here unlike with implements TS can infer the type of the parameter.
                 this.domNode.classList.add('expanded')
-            }
-
+        }
     }
 }
 
