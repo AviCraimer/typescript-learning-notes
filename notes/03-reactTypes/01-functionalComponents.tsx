@@ -1,5 +1,5 @@
 // Good resource
-//https://github.com/typescript-cheatsheets/react/blob/main/README.md#class-components
+//https://github.com/typescript-cheatsheets/react/blob/main/README.md
 
 import React, { PropsWithChildren, ReactEventHandler, useState } from "react";
 
@@ -47,6 +47,8 @@ function UserBadge2({ imageUrl }: { imageUrl: string }) {
 
 //An older pattern is to use React.FC or React.FunctionalComponent.
 
+type FunctionalComponent<P> = (props: P) => JSX.Element;
+
 const ButtonFC: React.FC<ButtonProps> = function ({
   ariaText,
   onClick,
@@ -69,7 +71,9 @@ function Counter() {
   return (
     <>
       <div>Current Count: {count}</div>
-      <button onClick={() => setCount(count + 1)}>Increment Count</button>
+      <button onClick={() => setCount((count) => count + 1)}>
+        Increment Count
+      </button>
     </>
   );
 }
@@ -83,6 +87,7 @@ function Counter() {
 
 type IncrementButtonProps = {
   setCount: React.Dispatch<React.SetStateAction<number>>;
+  //setCount: HookSetStateFn<number>;
 };
 
 function IncrementButton({ setCount }: IncrementButtonProps): JSX.Element {
@@ -113,9 +118,12 @@ function ToDos1() {
   );
 }
 
+type ToDo = {
+  toDoText: string;
+};
 //We fix this by adding the generic type argument to useState
 function ToDos2() {
-  const [toDos, setToDos] = useState<{ toDoText: string }[]>([]);
+  const [toDos, setToDos] = useState<ToDo[]>([]);
   return (
     <ul>
       {toDos.map((toDo) => (
@@ -127,16 +135,17 @@ function ToDos2() {
 
 //If we initialize our state  with null or undefined, just add the value as a union type
 function ToDos3() {
-  const [toDos, setToDos] = useState<{ toDoText: string }[] | null>(null);
+  const [toDos, setToDos] = useState<ToDo[] | null>(null);
+
+  if (toDos === null) {
+    return null;
+  }
+
   return (
     <ul>
-      {toDos.map(
-        (
-          toDo //However, now we get an error because toDos might be null, so it won't have map. We can fix this with a null conditional check (left as an exercise).
-        ) => (
-          <li>{toDo.toDoText}</li>
-        )
-      )}
+      {toDos.map((toDo) => (
+        <li>{toDo.toDoText}</li>
+      ))}
     </ul>
   );
 }

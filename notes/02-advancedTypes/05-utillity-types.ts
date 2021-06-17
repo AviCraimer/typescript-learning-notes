@@ -1,0 +1,268 @@
+//Utility types
+// Docs: https://www.typescriptlang.org/docs/handbook/utility-types.html
+
+
+type Point = {
+    x: number,
+    y: number,
+    z?: number, //Notice that z is optional, it could be a 2D point or a 3D point
+}
+
+//We can use the Required utility function to make all three coordinates required, i.e., only 3D points.
+type Point3D = Required<Point>
+
+//What if we want to specify just a partial coordinat, e.g., only x, or x and y. We can easily do this with the Partial utility type. Now all properties are optional.
+type Coordinate = Partial<Point>
+
+//Let's use our types to write an update function. This could be used in a game to move characters around in space.
+function updateCoordinates(p: Point3D, update: Coordinate) {
+    return {
+        ...p,
+        ...update
+    }
+}
+
+const start = {
+    x: 0,
+    y: 0,
+    z: 0
+}
+
+//Here we move to the right, leaving the other coordinates unchanged
+const newPosition = updateCoordinates(start, {x: 4});
+  //{
+//     x: 4,
+//     y: 0,
+//     z: 0
+// }
+
+// Notice that we updated our coordinate immutably, by creating a new object and using the spread operator. Suppose we had some state logic that would be broken if a function were to mutate an object. We can ensure this doesn't happen with the Readonly type.
+
+type ImmutablePoint3D = Readonly<Point3D>
+
+function updateCoordinates2(p: ImmutablePoint3D, update: Coordinate) {
+
+    //Now we get an error if we attempt to mutate p
+    p.x = 4
+
+    return {
+        ...p,
+        ...update
+    }
+}
+
+//We can still call our function with a non-immutable Point3D. It will be treated as immutable inside the function.
+const newPosition2 = updateCoordinates2(start, {x: 4});
+
+// We can also make it immutable by re-assigning it
+const startImmutable :ImmutablePoint3D = start
+
+//Unfortunately, we can allow assign in the other direction which breaks the readonly requirements!
+
+const notImmutableStart : Point3D = startImmutable
+
+//This is a big problem: https://stackoverflow.com/questions/53412934/disable-allowing-assigning-readonly-types-to-non-readonly-types
+
+// So bear in mind that readonly is only a week guarentee of immutability. If you pass a readonly value to a function that types the parameter as non-readonly, that function can mutate all it likes.
+
+function mutate (p: Point3D) {
+    p.x = 666
+}
+
+mutate(startImmutable) //NO ERROR!@#$*
+
+//On to happier things.
+
+
+// Pick Utility Type
+//It can happen that you have an object type and you want to just get a few keys in it.
+
+type APIResponse  = {
+    headers: {blah: string},
+    data: {foo: number, important: string, content: {}[]  },
+    logging: {},
+    errors: {}
+}
+
+// If all you needed as the type of the data you could do this.
+
+type APIData = APIResponse["data"]
+
+//But suppose you want the data and the headers. You could do it manually, like so
+
+type _APIRelevant = {
+    headers: APIResponse["headers"],
+    data: APIResponse["data"]
+}
+
+//But there is a lot of repetition here, especially if you needed to get more than two keys.
+
+type APIRelevant = Pick<APIResponse, "data" | "headers">
+//Hover over to confirm that this gets the relevant type. Wow, you might think this was some magic that had to be baked into TypeScript, but in fact, you can build this type yourself.
+
+
+//Let's look at how this works
+type MyPick<T, K extends keyof T> = { [P in K]: T[P]; }
+
+//You provide a type and key in that type (or a union of keys)
+
+// the keyof type operator turns the keys from an object type into a union type.
+
+type APIResponseKeys = keyof APIResponse
+// =  "headers" | "data" | "logging" | "errors"
+
+//Now any subset of that union type is considered to extend the type. Remember that "extends X" really means, "is a sub-type of X"
+
+//So K can by "header" or "header" | "data", etc.
+
+//Finally, the type returned by Pick uses a mapped type, P in K. Here P is a type parameter that iterates through all the values in K. So T[P] is just the type of each property in T (of those properties include in the union K).
+
+
+
+// Omit
+
+//Pick is nice if you only want a few properties in an complex object type. But sometimes you just need to leave some things out. For this you can use Omit.
+
+//In the above example we could get the same type by omitting logging and errors
+
+type APIRelevant2 = Omit<APIResponse, "logging" | "errors">
+
+
+//Exclude uses a conditional type to remove types from a union
+type Fruit = "Apple" | "Orange" | "Banana" | "Mango"
+
+type FruitAllergies = "Banana" | "Mango"
+
+type EdibleFruit = Exclude<Fruit, FruitAllergies>
+
+//Here is the definition
+type _MyExclude<T, U> = T extends U ? never : T
+//Well this makes no sense on the face of it.
+
+// To help us understand Exclude, we will have to learn a bit of type theoretic algebra (feel free to skip this if you don't care)
+
+
+//** Never as empty type
+
+// It might sound weird but you can assign never to every other type. If you think in set theory terms, the never type is the empty set, and the empty set is a sub-set of every other set.
+
+// So if we have a union type: "apple" | "orange", then this is the same type as "apple" | "orange" | "never"
+type Fruit2 = "Apple" | "Orange" | "Banana" | "Mango" | never
+//Same type as Fruit
+
+// Conditional types and union distribution
+
+type NoEmpty<T> = T extends null | undefined ? never : T
+
+// The union of a conditional type is the same as the union of the conditional applied to the different members of the union.
+
+// Remember that a union is like a logical OR. If I say, "A cat or a dog eats its food", this is the same as saying, "Either a cat eats its food OR a dog eats its food".
+
+//So here I'm saying "string or null aren't empty"
+type Ex = NoEmpty<string | null>
+
+//Which is the same as "Either string isn't empty or null isn't empty"
+type Expanded = NoEmpty<string>   | NoEmpty<null>
+//          maps string to string | maps null to never
+// so you get        string | never
+// which reduces to   string
+
+
+//So getting back to Exclude
+
+type MyExclude<T, U> = T extends U ? never : T
+// Where T is a union type. This says, every value of the union either extends (is a subtype of) U, or it doesn't. If it extends U, then delete it by mapping to never, if it doesn't extend U, then keep it.
+
+
+// Now, take a moment to read the Omit type definition. See if you can figure out how it works. You'll also need to look at Exlude
+
+type MyOmit<T, K extends string | number | symbol> = {
+    [P in MyExclude<keyof T, K>]: T[P]; }
+
+//After all that heavy logic, let's look at some fun and simple utility types.
+
+// With string unions you might need to support both upper and lower case versions. A common example would be for fetch types.
+
+type LowercaseFetchMethod = "post" | "get" | "put" | "delete"
+
+//But you want to support the uppercase versions of all these strings as well.
+
+// You can do this.
+
+type FetchMethod = LowercaseFetchMethod | Uppercase<LowercaseFetchMethod>
+
+// The Uppercase utility type changes all the string literal types from lowercase to uppercase.
+
+// Ok, but what if later you want to get just the lower case version and you forgot where you put the original lowercase fetch method type definition (don't do this in practice!)
+
+type LowerCaseFetchRecreated = Lowercase<FetchMethod>
+
+// You can also use Capitalize and Uncapitalize, which work on the first character of each string.
+
+//Unlike the other utility types we examined, these string literal utilities are not definable on your own. They are baked into the TypeScript compiler.
+
+//Record
+
+//A record is an object with a bunch of different keys that all have the same type of value. For example, a dictionary that looks up each word by the word as a key, and gives back a definition.
+
+type Definition  = {
+    word: string,
+    definition: string,
+    etymology: string
+}
+
+type Dictionary = Record<string, Definition>
+
+//eg
+
+let myDictionary : Dictionary = {
+    "apple": {
+        word: "apple",
+        definition: "A fruit",
+        etymology: "I don't know"
+    },
+    "orange": {
+        word: "orange",
+        definition: "An orange fruit",
+        etymology: "I don't know"
+    }
+}
+
+//Note that there is nothing in the type definition to ensure that the key matches the word property. That would be up to the runtime code to enforce.
+
+// I can also be used with union types. We can quickly defined vectors of any length.
+
+//Note: A vector is analogous to an array, but with a fixed number of indexes.
+
+type Vector4<T> = Record<0 | 1| 2 |3, T>
+type Vector5<T> = Record<0 | 1| 2 |3 | 4, T>
+
+type Point4D = Vector4<number>
+
+const p4 :Point4D = {
+    0:  34.22,
+    1: 23.2,
+    2: 43.22,
+    3: 234.333
+}
+//I need to include all the keys provided in the Record type
+
+// If I try to access a index that is outside the range, I'll get a TS error
+
+const undef = p4[4] //I will get an error here as long as I have "no implicit any" turned on in tsconfig
+
+
+
+
+
+//Remaining utility types.
+
+Extract<Type, Union>
+NonNullable<Type>
+Parameters<Type>
+ConstructorParameters<Type>
+ReturnType<Type>
+InstanceType<Type>
+ThisParameterType<Type>
+OmitThisParameter<Type>
+ThisType<Type>

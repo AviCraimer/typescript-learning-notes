@@ -2,7 +2,6 @@
 //https://github.com/typescript-cheatsheets/react/blob/main/README.md#class-components
 
 import React, { Component } from "react";
-import { render } from "react-dom";
 
 //React.Component is a generic type (aka React.Component<PropType, StateType>),
 
@@ -14,7 +13,7 @@ type State = {
   pageMessage: string;
 };
 
-class MyPage extends Component<Props, State> {
+export class MyPage extends Component<Props, State> {
   state: State = {
     // optional second annotation for better type inference
     pageMessage: "Hello!",
