@@ -1,5 +1,5 @@
 //Here is an amazing video showing how to use template literal types together with conditional types to make a strongly typed REST API client.
-//https://youtu.be/aZ6nnGlfBG8
+//https://youtu.be/xdylpZ3jOGs
 
 type CollectionPaths =
   | "/collections"
