@@ -40,7 +40,8 @@ fetchCollection("/collections/{collectionId}/{pageNumber}", "my-collection");
 type PathParameter2<Path extends string> =
   Path extends `${infer Head}{${infer Parameter}}${infer Tail}`
     ? [
-        pathParameter: string,
+        //Here we conditionally type the parameter based on having Number as the final word in the parameter name.
+        pathParameter: Parameter extends `${string}Number` ? number : string,
 
         //Here we apply PathParameter2 to the Tail of our string and spread out the resulting tuple type. If there are no other curly brackets in the tail, we will spread the empty tuple and terminate our recursion.
         ...params: PathParameter2<Tail>
@@ -61,5 +62,5 @@ fetchCollection2("/collections/{collectionId}/{pageNumber}", "my-collection");
 fetchCollection2(
   "/collections/{collectionId}/{pageNumber}",
   "my-collection",
-  "2"
+  2
 );
