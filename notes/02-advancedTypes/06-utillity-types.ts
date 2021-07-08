@@ -145,26 +145,9 @@ type _MyExclude<T, U> = T extends U ? never : T;
 export type Fruit2 = "Apple" | "Orange" | "Banana" | "Mango" | never;
 //Same type as Fruit
 
-// Conditional types and union distribution
-
-type NoEmpty<T> = T extends null | undefined ? never : T;
-
-// Conditional Union Distribution: Applying a conditional type to a union is equivalent to the condition applied to each members of the union.
-
-// Remember that a union is like a logical OR. If I say, "A cat or a dog eats its food", this is the same as saying, "Either a cat eats its food OR a dog eats its food".
-
-//So here I'm saying "string or null aren't empty"
-type Ex = NoEmpty<string | null>;
-
-//Which is the same as "Either string isn't empty or null isn't empty"
-type Expanded = NoEmpty<string> | NoEmpty<null>;
-//        maps string to string | maps null to never
-// so you get           string  |    never
-// which reduces to          string
-
-//So getting back to Exclude
-
 type MyExclude<T, U> = T extends U ? never : T;
+// To understand this, first review to the section on conditional union distribution in the notes on conditional types.
+
 // Where T is a union type. This says, every value of the union either extends (is a subtype of) U, or it doesn't. If it extends U, then delete it by mapping to never, if it doesn't extend U, then keep it.
 
 // Now, take a moment to read the Omit type definition. See if you can figure out how it works.
