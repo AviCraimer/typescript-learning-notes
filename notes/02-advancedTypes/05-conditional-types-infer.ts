@@ -49,7 +49,7 @@ type Expanded = NoEmpty<string> | NoEmpty<null>;
 // Now, a good mental model for conditional types is they they are type functions, i.e., functions that take in a type input (the condition) and output a return type (the then/else types).
 
 //In this simple example we can see T as our parameter/argument to the function, and the return type of the function are string literal types "array" or "other".
-type IsArray<T> = T extends Array<T> ? "array" : "other";
+type IsArray<T> = T extends Array<any> ? "array" : "other";
 
 // But what if we want additional variables within our type function, to infer a part of the input type to use in our output.
 

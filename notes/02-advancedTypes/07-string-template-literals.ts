@@ -24,3 +24,7 @@ type Cards = `${Rank} of ${Suit}`;
 //Wow, we got all 52 combinations!
 
 // Be careful with this, it will really slow down your type checking if you create a combinatoric explosion.
+
+function getCardString(rank: Rank, suit: Suit): Cards {
+  return `${rank} of ${suit}`;
+}

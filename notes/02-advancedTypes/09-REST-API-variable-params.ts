@@ -9,16 +9,16 @@ type CollectionPaths =
 
 //We want to parse out the collectionID parameter so we can use it to check whether a parameter needs to be passed to our API function.
 
-type PathParameter<Path extends string> =
+type PathParameter<Path extends CollectionPaths> =
   Path extends  //The template literal type below, checks if there is anything between curly brackets in our path string.
   `${infer Head}{${infer Parameter}}${infer Tail}`
     ? //If so, it returns a tuple with a pathParameter string argument. This will be used as an extra argument for our fetch function.
       [pathParameter: string]
     : [];
 
-function fetchCollection<T extends CollectionPaths>(
-  path: T,
-  ...pathParameter: PathParameter<T>
+function fetchCollection<Path extends CollectionPaths>(
+  path: Path,
+  ...pathParameter: PathParameter<Path>
 ) {
   //Do some stuff
 }

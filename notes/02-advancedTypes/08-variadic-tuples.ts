@@ -1,4 +1,4 @@
-export type NameAge = [string, number];
+export type NameAge = [name: "George" | "Maria", age: number];
 
 const [name, age]: NameAge = ["George", 45];
 
@@ -43,3 +43,15 @@ const superMultiClass = typeClassProps([
   { class: "fighter", level: 2 },
   31,
 ]);
+
+function makeCharacter<T extends ClassProps[]>(args: CharacterProps<T>) {}
+
+makeCharacter(
+  typeClassProps([
+    "Zimbobap",
+    { class: "thief", level: 3 },
+    { class: "wizard", level: 6 },
+    { class: "fighter", level: 2 },
+    31,
+  ])
+);
