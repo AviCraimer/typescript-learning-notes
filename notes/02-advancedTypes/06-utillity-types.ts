@@ -1,6 +1,9 @@
 //Utility types
 // Docs: https://www.typescriptlang.org/docs/handbook/utility-types.html
 
+import { allowedNodeEnvironmentFlags } from "node:process";
+import { isArray } from "node:util";
+
 type Point = {
   x: number;
   y: number;
@@ -235,14 +238,132 @@ const p4: Point4D = {
 
 const undef = p4[4]; //I will get an error here as long as I have "no implicit any" turned on in tsconfig
 
-//Remaining utility types.
+//***Extract
+type Pets =
+  | "Fido"
+  | "Whiskers"
+  | "Thomas the Turtle"
+  | "Ralph"
+  | "Fuzzy"
+  | "Iggy";
 
-// Extract<Type, Union>
-// NonNullable<Type>
-// Parameters<Type>
-// ConstructorParameters<Type>
-// ReturnType<Type>
-// InstanceType<Type>
-// ThisParameterType<Type>
-// OmitThisParameter<Type>
+type Dogs = "Fido" | "Ralph" | "Bingo" | "Lassie";
+
+type MyDogs = Extract<Dogs, Pets>;
+
+// Extract<A, B>
+// You can think of this in two ways. Either as extracting members of B that are in A. Or equivalently, as filtering A, based on whether members of A are in B.
+
+//We can see that the type signature uses the conditional type distribution property to filter each member of T based on whether it is a subtype of U.
+type MyExtract<T, U> = T extends U ? T : never;
+
+//*** NonNullable
+// Simply removes null or undefined from a union type
+type One = NonNullable<undefined | 1>;
+
+type One_ = NonNullable<null | 1>;
+
+//Looking at the type signature shows the now familiar pattern of using conditional types to apply a condition to each member of a union, and using the never type to remove unwanted members.
+type MyNonNullable<T> = T extends null | undefined ? never : T;
+
+//*** ReturnType
+// Get the return type of a function
+
+type Container = Array<any> | string | Set<any>;
+
+function append(container: Container, element: any) {
+  if (typeof container === "string") {
+    return container + element;
+  } else if (Array.isArray(container)) {
+    return [...container, element];
+  } else if (container instanceof Set) {
+    return new Set(container).add(element);
+  }
+  //This last check ensures we have covered all the cases in the Container union type.
+  let a: never = container;
+
+  //By returning a never value we tell the compiler not to worry about the conditions being unmet.
+  return a;
+}
+
+// Using ReturnType, we get back the equivalent of our container type. This could be useful if we have imported append into a module, but have not imported the Container type. Or if we simply want to verify that the append function returns all the correct types.
+type Container_ = ReturnType<typeof append>;
+
+//Parameters lets us get the tuple type of a function. This is useful for programming with higher-order functions. Say we want to store the arguments of a function to apply them inside another function. We can use Parameters to get the tuple type, and then use the spread operator to apply this tuple to our function.
+type AppendArgs = Parameters<typeof append>;
+
+//e.g.,
+
+const numArrayArgs: AppendArgs = [[1, 2, 3], 4];
+
+const numArray = append(...numArrayArgs);
+
+//***  */ ConstructorParameters
+
+class Candidate {
+  constructor(
+    public name: string = name,
+    public politicalParty:
+      | "The Dogs"
+      | "The Cats"
+      | "The Pigs" = politicalParty,
+    private chanceOfVictory: number = chanceOfVictory
+  ) {}
+  wins() {
+    return Math.random() > this.chanceOfVictory;
+  }
+}
+
+type CandidateArgs = ConstructorParameters<typeof Candidate>;
+//Why do we need to use the typeof operator here? By default, when you reference a class in a type position, TS infers the instance type for the class (i.e., it infers the type of being a Candidate object, not the type of the Candidate class itself. Since the ConstructorParameters utility operates on classes, we need to use the typeof operator to get the class type. )
+
+class CandidateRequired {
+  constructor(
+    public name: string,
+    public politicalParty: "The Dogs" | "The Cats" | "The Pigs",
+    private chanceOfVictory: number
+  ) {
+    this.name = name;
+    this.politicalParty = politicalParty;
+    this.chanceOfVictory = chanceOfVictory;
+  }
+  wins() {
+    return Math.random() > this.chanceOfVictory;
+  }
+}
+
+type CandidateRequiredArgs = ConstructorParameters<typeof CandidateRequired>;
+//Now all the constructor parameters are required.
+
+//Instance type gives you the return type of the a class's constructor function. For custom classes, this is equivalent to what you get if you just write the class name in a type position.
+
+//e.g., the types below are the same
+let bob: Candidate;
+let susan: InstanceType<typeof Candidate>;
+
+//This is neat but also useless.
+//So when would you use InstanceType?
+
+// It is hard to think of examples.
+
+// Here is an example from: https://lesscodeismore.dev/utility-types-part2/
+declare function create<T extends new () => any>(c: T): InstanceType<T>;
+
+class A {
+  b: 0 = 0;
+}
+
+const instA = create(A); // instA has the type A
+
+// In this example we have a factory that takes in a class as an argument and returns the instance type of that class. We need to use instance type to properly type such a higher-order function.
+
+//The last three utilities are hard to think of use cases for so I've left the notes minimal for now.
+
+//*** OmitThisParameter<Type>
+//Removes the this parameter from a type.
+
+//*** ThisParameterType<Type>
+//Suppose you want to define a function signature with a this parameter type to later us in defining classes.
+
 // ThisType<Type>
+//Only useable when the compiler has noImplicitThis turned on. Not relevant for most purposes.
