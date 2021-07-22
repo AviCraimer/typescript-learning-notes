@@ -338,6 +338,7 @@ class CandidateRequired {
 type CandidateRequiredArgs = ConstructorParameters<typeof CandidateRequired>;
 //Now all the constructor parameters are required.
 
+//*** InstanceType
 //Instance type gives you the return type of the a class's constructor function. For custom classes, this is equivalent to what you get if you just write the class name in a type position.
 
 //e.g., the types below are the same
