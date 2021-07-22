@@ -255,6 +255,9 @@ type MyDogs = Extract<Dogs, Pets>;
 // You can think of this in two ways. Either as extracting members of B that are in A. Or equivalently, as filtering A, based on whether members of A are in B.
 
 //We can see that the type signature uses the conditional type distribution property to filter each member of T based on whether it is a subtype of U.
+
+//Equivalent to set intersection?
+
 type MyExtract<T, U> = T extends U ? T : never;
 
 //*** NonNullable
@@ -298,7 +301,7 @@ const numArrayArgs: AppendArgs = [[1, 2, 3], 4];
 
 const numArray = append(...numArrayArgs);
 
-//***  */ ConstructorParameters
+//*** ConstructorParameters
 
 class Candidate {
   constructor(
