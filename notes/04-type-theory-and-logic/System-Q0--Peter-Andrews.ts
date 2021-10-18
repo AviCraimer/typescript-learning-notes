@@ -17,7 +17,7 @@ type PrimitiveType = typeof Ind | typeof Om;
 type TypeExpression = PrimitiveType | [TypeExpression, TypeExpression];
 
 //Gets a string which is unique to each type.
-const typeToString = (type: TypeExpression): string => {
+export const typeToString = (type: TypeExpression): string => {
     if (typeof type === "symbol") {
         return type.description ?? "_";
     } else {
@@ -56,7 +56,7 @@ type ConstantSymbol = WFFBase & {
 type PrimitiveTerm = VariableSymbol | ConstantSymbol;
 
 // Generate any number of variables of the given type. Counter ensures that the names are all distinct. i.e., it impossible to have two variables of the same name assigned to different types (within a given session).
-const getVariable = (() => {
+const Var = (() => {
     let counter = 0;
     return (type: TypeExpression): VariableSymbol => {
         counter++;
@@ -69,7 +69,7 @@ const getVariable = (() => {
     };
 })();
 
-// console.log(getVariable(Om), getVariable([Ind, Ind]));
+// console.log(Var(Om), Var([Ind, Ind]));
 
 //(c) Logical Constants
 
@@ -89,7 +89,19 @@ const Q = (() => {
         };
 
         QLookup.set(alphaStr, QInstance);
-        return QInstance;
+
+        const ApplyQ1 = (a: WFF) => {
+            const partialApplication = Apply(QInstance, a);
+
+            const ApplyQ2 = (b: WFF) => {
+                return Apply(partialApplication, b);
+            };
+            ApplyQ2.wff = partialApplication;
+            return ApplyQ2;
+        };
+        ApplyQ1.wff = QInstance;
+
+        return ApplyQ1;
     };
 })();
 
@@ -174,46 +186,131 @@ const Abstract = (x: VariableSymbol, b: WFF): LambdaTerm => {
 type WFF = PrimitiveTerm | FnApp | LambdaTerm;
 
 //p 212, Definitions
-const Q_Om = Q(Om);
-const BiBooleanPropEquality = Q(Q_Om.type);
-
-const T = Apply(Apply(BiBooleanPropEquality, Q(Om)), Q(Om)) as FnApp;
-
-//A function that takes any truth-value and always returns T
-const x_Om = getVariable(Om);
-const alwaysTrue = Abstract(x_Om, T);
-const id_Om = Abstract(x_Om, x_Om);
+const T = (() => {
+    const Q_Om = Q(Om);
+    const BiBooleanPropEquality = Q(Q_Om.wff.type);
+    return BiBooleanPropEquality(Q(Om).wff)(Q(Om).wff);
+})();
 
 //Now false is the equality of AlwaysTrue and Id_Om, since clearly this is false.
-const F = Apply(Apply(Q(alwaysTrue.type), alwaysTrue), id_Om);
+const F = (() => {
+    //A function that takes any truth-value and always returns T
+    const x_Om = Var(Om);
+    const alwaysTrue = Abstract(x_Om, T);
+    const id_Om = Abstract(x_Om, x_Om);
+    return Q(alwaysTrue.type)(alwaysTrue)(id_Om);
+})();
 
-//Pi returns a ForAll constructor for each type. The ForAll constructor needs an additional argument of type alpha -> Om. This is some property of elements of alpha, and the completed ForAll proposition will be true iff the property equals a property that maps all alphas to True. In other words, only if the property is true of all alphas.
-const Pi = (alpha: TypeExpression) => {
-    const alphaStr = typeToString(alpha);
+//Pi returns a ForAll constructor for each variable. The ForAll constructor needs an additional argument of type alpha -> Om. This is some property of elements of alpha, and the completed ForAll proposition will be true iff the property equals a property that maps all alphas to True. In other words, only if the property is true of all alphas.
+const Pi = (x: VariableSymbol) => {
+    const alpha = x.type;
 
     const Q_alphaPredicate = Q([alpha, Om]);
 
-    const allTrueAlpha = Abstract(getVariable(alpha), T);
+    const allTrueAlpha = Abstract(x, T);
 
-    return Apply(Q_alphaPredicate, allTrueAlpha);
+    return Q_alphaPredicate(allTrueAlpha);
 };
 
 // console.log(Pi(Ind));
 
 //Conjunction
-const and = () => {
-    const g = getVariable([Om, [Om, Om]]);
-    const x = getVariable(Om);
-    const y = getVariable(Om);
+const andWFF = (() => {
+    const g = Var([Om, [Om, Om]]);
+    const x = Var(Om);
+    const y = Var(Om);
     const gxy = Apply(Apply(g, x), y);
     const leftSide = Abstract(g, gxy); // λg[g(x)(y)]
 
     const gTT = Apply(Apply(g, T), T);
-    const rightSide = Abstract(g, gTT);
+    const rightSide = Abstract(g, gTT); // λg[g(T)(T)]
 
-    const andEquation = Apply(Apply(Q(leftSide.type), leftSide), rightSide);
+    const andEquation = Q(leftSide.type)(leftSide)(rightSide); //λg[g(x)(y)] = λg[g(T)(T)]
 
-    const conjunction = Abstract(x, Abstract(y, andEquation));
-    console.log(conjunction.name);
+    return Abstract(x, Abstract(y, andEquation));
+})();
+
+type Proposition = WFF & { type: typeof Om };
+
+//Convenience function for forming propositions with and
+const and = (a: WFF, b: WFF) => {
+    return Apply(Apply(andWFF, a), b);
 };
-and();
+
+//Material Conditional
+const ifThenWFF = (() => {
+    const x = Var(Om);
+    const y = Var(Om);
+    const bothXY = and(x, y);
+
+    const ifThenEquation = Q(Om)(bothXY)(x); //[x & y] = x
+    // If you know that this is true, then from x you can get both x and y. That is equivalent ot modus ponens. Alternatively, if you know this equation and ~y, then you know that left side is false so x must be false, which is modus tollens .
+
+    return Abstract(x, Abstract(y, ifThenEquation)); // λx.λy.([x & y] = x)
+
+    return ifThenEquation;
+})();
+
+//Convenience function for forming propositions with ifThen
+const ifThen = (a: WFF, b: WFF) => {
+    return Apply(Apply(ifThenWFF, a), b);
+};
+
+//Axioms
+
+//A1 States that a true-function being truth for both True and False, is equal to the the truth function being True for all values of Om.
+const A1 = (() => {
+    const g = Var([Om, Om]);
+    const TFG = and(Apply(g, T), Apply(g, F));
+    const x = Var(Om);
+    const allTruthValuesG = Pi(x)(g);
+    return Q(Om)(TFG)(allTruthValuesG);
+})();
+
+//If any two variables are equal, then all one-place predicates applied to them are also equal.
+const A2 = (alpha: TypeExpression) => {
+    const x = Var(alpha);
+    const y = Var(alpha);
+    const x_eq_y = Q(alpha)(x)(y);
+    const h = Var([alpha, Om]);
+    const hx = Apply(h, x);
+    const hy = Apply(h, y);
+    const hx_eq_hy = Q(hx.type)(hx)(hy);
+
+    return ifThen(x_eq_y, hx_eq_hy);
+};
+
+//Function equality based on point-wise (extensional) equality
+const A3 = (alpha: TypeExpression, beta: TypeExpression) => {
+    const f = Var([beta, alpha]);
+    const g = Var([beta, alpha]);
+    const f_eq_g = Q(f.type)(f)(g);
+    const x = Var(beta);
+    const fx = Apply(f, x);
+    const gx = Apply(g, x);
+    const fx_eq_gx = Q(fx.type)(fx)(gx);
+    const forAll_fx_eq_gx = Pi(x)(fx_eq_gx);
+    return Q(f_eq_g.type)(f_eq_g)(forAll_fx_eq_gx);
+};
+
+const A4_1 = (alpha: TypeExpression, beta: TypeExpression) => {};
+const A4_2 = (alpha: TypeExpression) => {};
+const A4_3 = (
+    alpha: TypeExpression,
+    beta: TypeExpression,
+    gamma: TypeExpression
+) => {};
+const A4_4 = (
+    alpha: TypeExpression,
+    beta: TypeExpression,
+    gamma: TypeExpression,
+    delta: TypeExpression
+) => {};
+
+const A5 = (() => {
+    const y = Var(Ind);
+
+    const i_y_eq = Apply(Iota, Q(Ind)(y).wff);
+
+    return Q(i_y_eq.type)(i_y_eq)(y);
+})();
