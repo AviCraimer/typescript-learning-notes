@@ -123,9 +123,9 @@ const Iota: ConstantSymbol = {
 // Function Application
 // Rule (b)
 const FnAppBrand = Symbol("Function Application Formula");
-type FnAppBrand = typeof FnAppBrand;
+
 type FnApp = WFFBase & {
-    syntaxRole: FnAppBrand;
+    syntaxRole: typeof FnAppBrand;
     components: [WFF, WFF];
 };
 
@@ -139,6 +139,7 @@ const typeEq = (a: TypeExpression, b: TypeExpression): Boolean => {
     }
 };
 
+//Forms a WFF by function application. It will throw an error if the types of the two WFF inputs are not compatible
 const Apply = (a: WFF, b: WFF): FnApp => {
     if (!a || !b) {
         console.log("One of the types sent to Apply is not defined");
@@ -168,9 +169,8 @@ const Apply = (a: WFF, b: WFF): FnApp => {
 // Lambda Abstraction
 //Rule (c)
 const LambdaBrand = Symbol("λ");
-type LambdaBrand = typeof LambdaBrand;
 type LambdaTerm = WFFBase & {
-    syntaxRole: LambdaBrand;
+    syntaxRole: typeof LambdaBrand;
     components: [WFF, WFF];
 };
 
