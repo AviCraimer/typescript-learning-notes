@@ -19,7 +19,7 @@ B.push(B); // B is a member of itself
 const A: any[] = [B, 3, 5, 6, "Cat", [], {}];
 A.push(A); // A is a member of itself and contains B which is a member of itself.
 
-const A_filtered = selfReferenceFilter(A); // [3,5,6,"A", [], {}]
+const A_filtered = selfReferenceFilter(A); // [3,5,6,"Cat", [], {}]
 //This will filter A and B from the members of A, since both have themselves as members. Note that the function does not alter either A or B, but simply re-packages their members based on the filter.
 
 //The next part we can't do fully programmatically, since it involves infinities!
