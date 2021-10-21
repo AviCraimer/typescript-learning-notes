@@ -83,26 +83,19 @@ const Substitution = (
 ): Lambda => {
     if (expression.role === "Variable") {
         //If the expression a variable matching x, replace it with substitute expression
-        if (expression.name === x.name && expression.free === x.free) {
+        if (expression.name === x.name) {
             return substitute;
         } else {
             //Otherwise return it unmodified
             return expression;
         }
     } else if (expression.role === "Abstraction") {
-        //If the expression is itself an abstraction, we have to consider scope, we don't replace if a variable with a narrow scope has the same name as our x.
         const [innerParam, body] = expression.components;
-
-        if (x.name === innerParam.name) {
-            //Within this expression x is bound to the inner lambda parameter "innerParam". So we don't replace it under the inner scope.
-            return expression as Lambda;
-        } else {
-            //If the innerParam has a different name, we replace the x variables inside the inner abstraction.
-            return {
-                ...expression,
-                components: [innerParam, Substitution(x, body, substitute)],
-            };
-        }
+        //If the innerParam has a different name, we replace the x variables inside the inner abstraction.
+        return {
+            ...expression,
+            components: [innerParam, Substitution(x, body, substitute)],
+        };
     } else if (expression.role === "Application") {
         //Application
         const [abstraction, argument] = expression.components;
@@ -119,8 +112,13 @@ const Substitution = (
 const Abstract = (x: VariableFree, expression: Lambda): Abstraction => {
     const x_bound = Var(x.name, false);
 
+    const newInnerBound = Var(x.name + "'", false);
+
+    // Substitute new name for existing bound variables with the same name as x
+    const newExpression = Substitution(x_bound, expression, newInnerBound);
+
     //Replace each free x variable in expression with the bound x variable.
-    const xBoundInExp = Substitution(x, expression, x_bound);
+    const xBoundInExp = Substitution(x, newExpression, x_bound);
 
     return {
         role: "Abstraction",
@@ -164,6 +162,36 @@ const id_x_app_y = Apply(id_x, y);
 // print(id_x_app_y);
 // console.log(id_x_app_y.toString());
 
+const unwrapApp = (app: Application): [VariableFree | Abstraction, Lambda] => {
+    const [inner, argument] = app.components;
+    console.log(inner.role);
+    if (inner.role === "Application") {
+        return unwrapApp(inner);
+    } else {
+        const varOrAbstraction = inner as VariableFree | Abstraction;
+        return [varOrAbstraction, argument];
+    }
+};
+
+const foo = Apply(Apply(x, y), z);
+console.log(foo.toString());
+console.log(unwrapApp(foo).map((ex) => ex.toString()));
+
+// const Beta_ = (expression: Lambda): Lambda => {
+//     if (expression.role === "Variable") {
+//         return expression;
+//     } else if (expression.role === "Application") {
+//         const [func, argument] = unwrapApp(expression);
+
+//         if (func.role === "Variable") {
+
+//         } else if (func.role === "Abstraction") {
+//             const [parameter, body] = func.components
+//             //Apply(Substitution(parameter, body, argument), )
+//         }
+//     }
+// };
+//  x(λy.[y](w))(λz.[z](t))
 // As we can see, the methods of abstraction and application by themselves, only ever make a lambda expression bigger.
 
 //However, there are also rules which can reduce a lambda expression, these rules are directly related to computation.
@@ -233,87 +261,87 @@ const Beta = (
 
 //Let's start with a JavaScript lambda
 
-//@ts-ignore
-const fnCompositionJs = (f) => (g) => (arg) => f(g(arg));
+// //@ts-ignore
+// const fnCompositionJs = (f) => (g) => (arg) => f(g(arg));
 
-//Can we replicate this with lambda expressions?
-//Create some free variables
-const f = Var("f");
-const g = Var("g");
-const arg = Var("arg");
-const g_arg = Apply(g, arg);
-// console.log(g_arg.toString());
-const f_g_arg = Apply(f, g_arg);
-// console.log(f_g_arg.toString());
-const f_after_g = Abstract(f, Abstract(g, f_g_arg));
-// console.log(compose.toString());
+// //Can we replicate this with lambda expressions?
+// //Create some free variables
+// const f = Var("f");
+// const g = Var("g");
+// const arg = Var("arg");
+// const g_arg = Apply(g, arg);
+// // console.log(g_arg.toString());
+// const f_g_arg = Apply(f, g_arg);
+// // console.log(f_g_arg.toString());
+// const f_after_g = Abstract(f, Abstract(g, f_g_arg));
+// // console.log(compose.toString());
 
-//Arg in compose is now bound
-// console.log("Free:");
-// print(f);
-// console.log("Bound:");
-// print(f_after_g.components);
+// //Arg in compose is now bound
+// // console.log("Free:");
+// // print(f);
+// // console.log("Bound:");
+// // print(f_after_g.components);
 
-//Great, now we can use our compose abstraction by first applying it. Let's just apply it to the identity function for simplicity.
-const composeId = Apply(Apply(f_after_g, id_x), Abstract(y, y));
+// //Great, now we can use our compose abstraction by first applying it. Let's just apply it to the identity function for simplicity.
+// const composeId = Apply(Apply(f_after_g, id_x), Abstract(y, y));
 
-//It works, reducing down to zero
-// console.log(Beta(composeId).toString());
+// //It works, reducing down to zero
+// // console.log(Beta(composeId).toString());
 
-// Non-terminating expressions
-const selfApplication = Abstract(x, Apply(x, x)); ////    λx.[ x( x ) ]
-// Beta(Apply(selfApplication, selfApplication), 0, 5); // λx˚ .[ x˚  (x˚ ) ] (λx˚ .[ x˚  (x) ])
+// // Non-terminating expressions
+// const selfApplication = Abstract(x, Apply(x, x)); ////    λx.[ x( x ) ]
+// // Beta(Apply(selfApplication, selfApplication), 0, 5); // λx˚ .[ x˚  (x˚ ) ] (λx˚ .[ x˚  (x) ])
 
-// Alpha Reduction  -- renaming bound variables
+// // Alpha Reduction  -- renaming bound variables
 
-// λx.x  is the same as λy.y, Alpha lets us do this.
-const Alpha = (expression: Abstraction, newName: string): Abstraction => {
-    const newVar = Var(newName, false);
+// // λx.x  is the same as λy.y, Alpha lets us do this.
+// const Alpha = (expression: Abstraction, newName: string): Abstraction => {
+//     const newVar = Var(newName, false);
 
-    const newBody = Substitution(
-        expression.components[0],
-        expression.components[1],
-        newVar
-    );
+//     const newBody = Substitution(
+//         expression.components[0],
+//         expression.components[1],
+//         newVar
+//     );
 
-    return {
-        ...expression,
-        components: [newVar, newBody],
-    };
-};
+//     return {
+//         ...expression,
+//         components: [newVar, newBody],
+//     };
+// };
 
-//To use this we'll need to get all the variable names in an expression
-const extractVariableNames = () => {};
+// //To use this we'll need to get all the variable names in an expression
+// const extractVariableNames = () => {};
 
-// λx.(λy.xy)
-// λy.yy //Error, the fact that these are the same is a problem.
+// // λx.(λy.xy)
+// // λy.yy //Error, the fact that these are the same is a problem.
 
-// λx.[λy.xy](λz.zy)
+// // λx.[λy.xy](λz.zy)
 
-//λx.[ λz.[ x (y) ] ] (λz.[ z (y) ])
-const exp1 = Apply(
-    Abstract(x, Abstract(z, Apply(x, y))),
-    Abstract(z, Apply(z, y))
-);
-const exp2 = Apply(
-    Abstract(x, Abstract(y, Apply(y, z))),
-    Abstract(y, Apply(y, z))
-);
-// Beta(exp1); //  Working!
-// Beta(exp2); // Working!
+// //λx.[ λz.[ x (y) ] ] (λz.[ z (y) ])
+// const exp1 = Apply(
+//     Abstract(x, Abstract(z, Apply(x, y))),
+//     Abstract(z, Apply(z, y))
+// );
+// const exp2 = Apply(
+//     Abstract(x, Abstract(y, Apply(y, z))),
+//     Abstract(y, Apply(y, z))
+// );
+// // Beta(exp1); //  Working!
+// // Beta(exp2); // Working!
 
-//*****  Arithmatic  ******
+// //*****  Arithmatic  ******
 
-// Repeated function application.
-// We can write a lambda abstraction that applies a function n times.
+// // Repeated function application.
+// // We can write a lambda abstraction that applies a function n times.
 
-//Here we are applying f directly to the identity function. We can think of this as applying f "zero times" since the the identity function λz˚.[ z˚ ], is a kind of  the "do nothing" function.
-const zeroTimes = Abstract(f, Apply(f, Abstract(z, z))); // λf˚.[ f˚ (λz˚.[ z˚ ]) ]
+// //Here we are applying f directly to the identity function. We can think of this as applying f "zero times" since the the identity function λz˚.[ z˚ ], is a kind of  the "do nothing" function.
+// const zeroTimes = Abstract(f, Apply(f, Abstract(z, z))); // λf˚.[ f˚ (λz˚.[ z˚ ]) ]
 
-// Beta(Apply(zeroTimes, Abstract(x, Abstract(z, Apply(x, y))))); // y
-Beta(Apply(Abstract(x, Abstract(z, Apply(x, y))), Abstract(z, z)));
+// // Beta(Apply(zeroTimes, Abstract(x, Abstract(z, Apply(x, y))))); // y
+// Beta(Apply(Abstract(x, Abstract(z, Apply(x, y))), Abstract(z, z)));
 
-const oneTime = Abstract(f, Apply(f, Abstract(z, z))); // λf˚.[ f˚ (λz˚.[ z˚ ]) ]
+// const oneTime = Abstract(f, Apply(f, Abstract(z, z))); // λf˚.[ f˚ (λz˚.[ z˚ ]) ]
 
 // const zero = Abstract(z, z); //Define zero to be equal to the identity function on variable z (the variable name does not matter here)
 
