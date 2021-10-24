@@ -35,7 +35,7 @@ type Abstraction = Readonly<{
 // This is like calling a function, except we don't actually compute the result We just form and agglomeration of the original expression and the second expression. Note, that the expression labeled "abstraction" represents an abstraction but it might not actually be an abstraction! That is the danger of not using types.
 type Application = Readonly<{
     role: "Application";
-    components: [abstraction: Lambda, argument: Lambda];
+    components: Lambda[];
     toString: () => string;
 }>;
 
@@ -50,8 +50,11 @@ function toString(this: Lambda): string {
         const [parameter, body] = this.components;
         return `λ${parameter.toString()}.[ ${body.toString()} ]`;
     } else if (this.role === "Application") {
-        const [abstraction, argument] = this.components;
-        return `${abstraction.toString()} (${argument.toString()})`;
+        return this.components
+            .map((exp, i) => {
+                return i === 0 ? exp.toString() : `(${exp.toString()})`;
+            })
+            .join(" ");
     }
     const nothing: never = this;
     return nothing;
@@ -74,6 +77,7 @@ function Var(name: string, free?: boolean): Variable {
 const x = Var("x");
 const y = Var("y");
 const z = Var("z");
+const w = Var("w");
 
 // First we need to define substitution for a variable
 const Substitution = (
@@ -106,11 +110,11 @@ const Substitution = (
         };
     } else if (expression.role === "Application") {
         //Application
-        const [abstraction, argument] = expression.components;
-        return Apply(
-            Substitution(x, abstraction, substitute),
-            Substitution(x, argument, substitute)
+        const subbedComponents = expression.components.map((exp) =>
+            Substitution(x, exp, substitute)
         );
+
+        return Apply(...subbedComponents);
     }
     const nothing: never = expression; //So TypeScript knows undefined will never be implicitly returned by the function.
     return nothing;
@@ -149,10 +153,15 @@ const id_x_JS = (x: Variable) => x;
 // But for fun and learning, we are building the machinery ourselves rather than relying directly on our programming language.
 
 // Our final lambda expression constructor:
-const Apply = (expression1: Lambda, expression2: Lambda): Application => {
+const Apply = (...args: Lambda[]): Application => {
+    let components: Lambda[] = args;
+    if (args[0].role === "Application") {
+        components = [...args[0].components, ...args];
+    }
+
     return {
         role: "Application",
-        components: [expression1, expression2],
+        components,
         toString,
     };
 };
@@ -187,6 +196,149 @@ const getUniqueParamNames = (expression: Lambda): string[] => {
 
     return [...new Set(getParamsInExpression(expression).map((x) => x.name))];
 };
+
+// const BetaVar = (expression: Variable):Variable {
+//     return expression
+// }
+const exampleExp = Abstract(
+    w,
+    Abstract(y, Abstract(x, Apply(y, Apply(Apply(w, y), x))))
+);
+
+const unfoldAbs = (exp: Abstraction): Lambda[] => {
+    let nonAbstractionBody: Lambda | undefined;
+    let list: Lambda[] = [];
+    let current: Abstraction = exp;
+    while (nonAbstractionBody === undefined) {
+        const [variable, body] = current.components;
+        list.push(variable);
+        if (body.role === "Abstraction") {
+            current = body;
+        } else {
+            nonAbstractionBody = body;
+            list.push(body);
+        }
+    }
+    return list;
+};
+
+const foldAbs = (variables: VariableBound[], expression: Lambda) => {
+    let current: Lambda = expression;
+
+    variables.reverse().forEach((variable) => {
+        current = {
+            role: "Abstraction",
+            components: [variable, current],
+            toString,
+        };
+    });
+    return current;
+};
+
+const BetaAbs = (expression: Abstraction): Lambda => {
+    const list = unfoldAbs(expression);
+    const body = list[list.length - 1];
+    const variables = list.slice(0, list.length - 1) as VariableBound[];
+
+    let resolvedBody = body;
+    if (body.role === "Application") {
+        // resolvedBody = BetaApp(body)
+    }
+
+    return foldAbs(variables, resolvedBody);
+};
+// console.log(exampleExp.toString()); //λ˚w.[ λ˚y.[ λ˚x.[ ˚y (˚w (˚y) (˚w (˚y)) (˚x)) ] ] ]
+// console.log(BetaAbs(exampleExp).toString()); // λ˚w.[ λ˚y.[ λ˚x.[ ˚y' (˚w' (˚y') (˚w' (˚y')) (˚x')) ] ] ]
+// Issue with the renaming of bound variables. It shouldn't be doing this.
+
+const BetaApp = (expression: Application): Lambda => {
+    const { components } = expression;
+    const first = components[0];
+    if (first.role === "Abstraction") {
+        const [parameter, body] = first.components;
+        const bodyParams = getUniqueParamNames(body);
+        let modifiedArg: Lambda = exp2;
+        bodyParams.forEach((param) => {
+            modifiedArg = Substitution(
+                Var(param, false),
+                modifiedArg,
+                Var(param + "'", false)
+            );
+        });
+        const substituted = Substitution(parameter, body, modifiedArg);
+
+        if (components.length > 2) {
+            //More arguments to apply in future steps
+            const resolvedApp: Application = {
+                ...expression,
+                components: [
+                    substituted,
+                    ...components.slice(2, components.length),
+                ],
+            };
+            return resolvedApp;
+        } else {
+            //All arguments have been applied:
+            return substituted;
+        }
+    } else {
+        //The first component cannot be an application because of how applications are constructed. There are no nested applications.
+        // If the first components is a variable we, might still be able to reduce one of the applied arguments.
+        const newComponents = [...components];
+        for (let i = 1; i < components.length; i++) {
+            const exp = components[i];
+            if (exp.role === "Abstraction") {
+                newComponents[i] = BetaAbs(exp);
+                break;
+            } else if (exp.role === "Application") {
+                newComponents[i] = BetaApp(exp);
+                break;
+            }
+        }
+        return {
+            ...expression,
+            components: newComponents,
+        };
+    }
+};
+
+type LambdaExpressionRoleFns = {
+    v: (x: VariableFree) => Lambda;
+    app: (app: Application) => Lambda;
+    abs: (abs: Abstraction) => Lambda;
+};
+
+type LambdaFn = (exp: Lambda) => Lambda;
+
+const lambdaSwitch = (fns: LambdaExpressionRoleFns): LambdaFn => {
+    const { v, app, abs } = fns;
+    return (exp: Lambda) => {
+        if (exp.role === "Application") {
+            return app(exp);
+        } else if (exp.role === "Abstraction") {
+            return abs(exp);
+        } else if (exp.role === "Variable" && exp.free === true) {
+            return v(exp);
+        } else {
+            throw new Error(
+                "Bound variable passed into lambda expression function, this is not allowed since a bound variable is not a complete lambda expression."
+            );
+        }
+    };
+};
+
+const BetaStep = lambdaSwitch({
+    v: (v) => v,
+    app: BetaApp,
+    abs: BetaAbs,
+});
+
+const BetaStepLog = (exp: Lambda) => {
+    const result = BetaStep(exp);
+    console.log(result.toString());
+    return result;
+};
+
 // β - Beta Reduction
 const Beta = (
     expression: Lambda,
@@ -200,65 +352,70 @@ const Beta = (
         );
     }
     //Print initial expression
-    console.log(expression.toString(), " -- Role:", expression.role);
+    console.log(expression.toString(), " -- Role:", expression.role, "\n");
     if (expression.role === "Variable") {
-        console.log("Expression is a variable\n");
         return expression;
     } else if (expression.role === "Abstraction") {
-        console.log("Expression is an abstraction");
         const [parameter, body] = expression.components;
 
         const bodyResolved = Beta(body);
 
         const newExpression: Lambda = {
             ...expression,
-            components: [parameter, Beta(body)], // iF beta(body is diff from body, run beta on whole expression)
+            components: [parameter, bodyResolved], // iF beta(body is diff from body, run beta on whole expression)
         };
-        console.log("With Resolved body:");
-        console.log(newExpression.toString(), "\n");
+
+        console.log("With Resolved body:", newExpression.toString());
+        console.log("Original body", body.toString());
+
         if (deepEqual(bodyResolved, body)) {
+            console.log("resolved and original are equal\n");
             return newExpression;
         }
         console.log("Body != body resolved");
         return Beta(newExpression, levels + 1, maxLevels);
     } else if (expression.role === "Application") {
-        const [inner, argument] = expression.components;
-
-        if (inner.role === "Application") {
-            console.log("Outer app, inner app\n");
-
-            // Nested Application
-            const resolved = Beta(inner, levels + 1, maxLevels);
-
-            const newExpression = Apply(resolved, argument);
-
-            return Beta(newExpression, levels + 1, maxLevels);
-        } else if (inner.role === "Abstraction") {
-            console.log("outer app, inner abstraction");
-            const [parameter, body] = inner.components;
-
-            const bodyParams = getUniqueParamNames(body);
-
-            let modifiedArg: Lambda = argument;
-            bodyParams.forEach((param) => {
-                modifiedArg = Substitution(
-                    Var(param, false),
-                    modifiedArg,
-                    Var(param + "'", false)
+        // const reducedComponents = expression.components.map((exp) =>
+        //     Beta(exp, levels + 1, maxLevels)
+        // );
+        const reducedComponents = expression.components;
+        const reduced = reducedComponents.reduce((exp1, exp2) => {
+            if (deepEqual(exp1, Var("EmptyLambda"))) {
+                return exp2;
+            } else if (exp1.role === "Abstraction") {
+                const [parameter, body] = exp1.components;
+                const bodyParams = getUniqueParamNames(body);
+                let modifiedArg: Lambda = exp2;
+                bodyParams.forEach((param) => {
+                    modifiedArg = Substitution(
+                        Var(param, false),
+                        modifiedArg,
+                        Var(param + "'", false)
+                    );
+                });
+                const substituted = Substitution(parameter, body, modifiedArg);
+                console.log(
+                    "After substitution: ",
+                    substituted.toString(),
+                    "\n"
                 );
-            });
+                return Beta(substituted, levels + 1, maxLevels);
+            } else if (
+                exp1.role === "Application" ||
+                exp1.role === "Variable"
+            ) {
+                return Apply(exp1, Beta(exp2, levels + 1, maxLevels));
+            }
+            let nothing: never = exp1;
+            return exp1;
+        }, Var("EmptyLambda"));
 
-            const substituted = Substitution(parameter, body, modifiedArg);
-            console.log("After substitution: ", substituted.toString(), "\n");
-            return Beta(substituted, levels + 1, maxLevels);
-        } else {
-            console.log("outer app, inner var\n");
-            // The expression can't be reduced any more, as the remaining left hand side of the application is just a variable.
-            return expression;
-        }
+        console.log("Application reduction finished\n");
+        return reduced;
+    } else {
+        const nothing: never = expression;
+        return expression;
     }
-    const nothing: never = expression;
-    return expression;
 };
 //Let's look at some tests of our lambda calculus machinery
 
@@ -325,6 +482,12 @@ const exp2 = Apply(
 // Beta(exp1); //  Working!
 // Beta(exp2); // Working!
 
+console.log(exp1.toString());
+BetaStepLog(exp1);
+BetaStepLog(exp1);
+BetaStepLog(exp1);
+BetaStepLog(exp1);
+
 //*****  Arithmatic  ******
 
 // Repeated function application.
@@ -337,16 +500,15 @@ const zeroTimes = Abstract(f, Apply(f, Abstract(z, z))); // λf˚.[ f˚ (λz˚.[
 // Beta(Apply(Abstract(x, Abstract(z, Apply(x, y))), Abstract(z, z))); //λ˚z.[ y ]
 
 const oneTime = Abstract(f, Apply(f, Abstract(z, z))); // λf˚.[ f˚ (λz˚.[ z˚ ]) ]
-const w = Var("w");
 
 const succ = Abstract(
     w,
     Abstract(y, Abstract(x, Apply(y, Apply(Apply(w, y), x))))
 );
 
-console.log(succ.toString());
+// console.log(succ.toString());
 // const succ = Abstract(nat, Abstract(f, nat)); // λnat˚.[ λf˚.[ nat˚ ] ]
-const one = Beta(Apply(succ, zeroTimes)); //λ˚y.[ λ˚x.[ ˚y (λ˚f.[ ˚f (λ˚z.[ ˚z ]) ] (˚y) (˚x)) ] ]
+// const one = Beta(Apply(succ, zeroTimes)); //λ˚y.[ λ˚x.[ ˚y (λ˚f.[ ˚f (λ˚z.[ ˚z ]) ] (˚y) (˚x)) ] ]
 // -- The inner expression is not resolving, maybe too deeply nested.
 
 // // Subtraction of one is just function application.
